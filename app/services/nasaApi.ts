@@ -4,7 +4,7 @@ const API_KEY = process.env.NEXT_PUBLIC_NASA_API_KEY || 'DEMO_KEY';
 const BASE_URL = 'https://api.nasa.gov/mars-photos/api/v1';
 
 // Cache simples em memória
-const cache = new Map<string, { data: any; timestamp: number }>();
+const cache = new Map<string, { data: PhotosResponse | RoverManifest | null; timestamp: number }>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
 
 export interface FetchPhotosParams {
@@ -14,7 +14,7 @@ export interface FetchPhotosParams {
   page?: number;
 }
 
-async function fetchWithCache(url: string): Promise<any> {
+async function fetchWithCache(url: string): Promise<PhotosResponse | RoverManifest | null> {
   // Verificar cache
   const cached = cache.get(url);
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
@@ -73,7 +73,7 @@ export async function fetchMarsPhotos({
   const url = `${BASE_URL}/rovers/${rover}/photos?${params.toString()}`;
 
   try {
-    const data = await fetchWithCache(url);
+    const data = await fetchWithCache(url) as PhotosResponse | null;
 
     if (!data) {
       console.log('No data available, returning empty response');
@@ -91,7 +91,7 @@ export async function fetchRoverManifest(rover: string): Promise<RoverManifest |
   const url = `${BASE_URL}/manifests/${rover}?api_key=${API_KEY}`;
 
   try {
-    const data = await fetchWithCache(url);
+    const data = await fetchWithCache(url) as RoverManifest | null;
     return data;
   } catch (error) {
     console.error('Error fetching rover manifest:', error);
